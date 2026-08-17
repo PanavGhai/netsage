@@ -81,7 +81,7 @@ def api_review():
     data = request.get_json()
 
     case = data.get("case")
-    config = data.get("config", {})
+    ai_response = data.get("ai_response")
     review_decision = data.get("review_decision")
     final_root_cause = data.get("final_root_cause")
     note = data.get("note", "")
@@ -91,20 +91,33 @@ def api_review():
             "error": "Case is required"
         }), 400
 
+    if not ai_response:
+        return jsonify({
+            "error": "AI response is required"
+        }), 400
+
     if review_decision not in ["Accepted", "Edited", "Rejected"]:
         return jsonify({
             "error": "Invalid review decision"
         }), 400
 
-    result = process_case(
-        case=case,
-        config=config,
-        review_decision=review_decision,
-        final_root_cause=final_root_cause,
-        note=note
+    review = review_diagnosis(
+        case["case_id"],
+        ai_response,
+        review_decision,
+        final_root_cause,
+        note
     )
 
-    return jsonify(result)
+    verification = verify_review(review)
+
+    return jsonify({
+        "case_id": case["case_id"],
+        "ai_response": ai_response,
+        "review": review,
+        "verification": verification
+    })
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

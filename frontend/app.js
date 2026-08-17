@@ -11,6 +11,7 @@ const submitReviewButton = document.getElementById("submit-review-button");
 let cases = [];
 let selectedCase = null;
 let selectedReviewDecision = null;
+let currentAiResponse = null;
 
 async function loadCases() {
     const response = await fetch("/data/cases.json");
@@ -58,8 +59,17 @@ function setReviewStatus(status) {
 function showDiagnosis(data) {
     const result = data.ai_response;
 
+    currentAiResponse = result;
+
     document.getElementById("root-cause").textContent =
         result.root_cause || "-";
+
+    const rootCause = document.getElementById("root-cause");
+    const editedRootCause = document.getElementById("edited-root-cause");
+
+    rootCause.hidden = false;
+    editedRootCause.hidden = true;
+    editedRootCause.value = "";
 
     document.getElementById("confidence").textContent =
         result.confidence || "-";
@@ -131,6 +141,15 @@ acceptButton.addEventListener("click", function () {
 
 editButton.addEventListener("click", function () {
     selectedReviewDecision = "Edited";
+
+    const rootCause = document.getElementById("root-cause");
+    const editedRootCause = document.getElementById("edited-root-cause");
+
+    editedRootCause.value = rootCause.textContent;
+    rootCause.hidden = true;
+    editedRootCause.hidden = false;
+    editedRootCause.focus();
+
     setReviewStatus("Edited");
 });
 
@@ -158,8 +177,18 @@ async function submitReview() {
         gateway: document.getElementById("default-gateway").value
     };
 
-    const finalRootCause =
+    let finalRootCause =
         document.getElementById("root-cause").textContent;
+
+    if (selectedReviewDecision === "Edited") {
+        finalRootCause =
+            document.getElementById("edited-root-cause").value.trim();
+
+        if (!finalRootCause) {
+            alert("Enter a corrected root cause before submitting.");
+            return;
+        }
+    }
 
     const note =
         document.getElementById("review-notes").value;
@@ -173,6 +202,7 @@ async function submitReview() {
             body: JSON.stringify({
                 case: selectedCase,
                 config: config,
+                ai_response: currentAiResponse,
                 review_decision: selectedReviewDecision,
                 final_root_cause: finalRootCause,
                 note: note
