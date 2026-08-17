@@ -1,0 +1,8 @@
+{
+  "findings": [
+    "Gateway is outside the local subnet",
+    "Required VLAN is missing",
+    "Interface is down",
+    "Route to network is missing"
+  ]
+}

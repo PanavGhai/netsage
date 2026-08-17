@@ -1,0 +1,10 @@
+{
+  "ip": "192.168.10.25",
+  "mask": "255.255.255.0",
+  "gateway": "192.168.20.1",
+  "vlan": "20",
+  "existing_vlans": ["10", "30"],
+  "interface_status": "down",
+  "required_network": "192.168.30.0/24",
+  "routes": ["192.168.10.0/24"]
+}
