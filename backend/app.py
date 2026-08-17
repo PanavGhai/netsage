@@ -1,7 +1,14 @@
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+
 from checker.rules import run_checks
 from backend.ai_service import diagnose
 from backend.review_service import review_diagnosis
 from backend.verification import verify_review
+
+
+app = Flask(__name__)
+CORS(app)
 
 
 def process_case(
@@ -38,3 +45,37 @@ def process_case(
         "review": review,
         "verification": verification
     }
+
+
+@app.route("/api/health", methods=["GET"])
+def health():
+    return jsonify({
+        "status": "ok",
+        "service": "NetSage AI"
+    })
+
+
+@app.route("/api/diagnose", methods=["POST"])
+def api_diagnose():
+    data = request.get_json()
+
+    case = data.get("case")
+    config = data.get("config", {})
+
+    if not case:
+        return jsonify({
+            "error": "Case is required"
+        }), 400
+
+    findings = run_checks(config)
+    ai_response = diagnose(case, findings)
+
+    return jsonify({
+        "case_id": case["case_id"],
+        "checker_findings": findings,
+        "ai_response": ai_response
+    })
+
+
+if __name__ == "__main__":
+    app.run(debug=True, port=5000)
