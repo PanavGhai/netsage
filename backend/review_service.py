@@ -5,7 +5,14 @@ from datetime import datetime
 LOG_FILE = "logs/review_log.csv"
 
 
-def review_diagnosis(case_id, ai_response, decision, final_root_cause=None, note=""):
+def review_diagnosis(
+    case_id,
+    ai_response,
+    decision,
+    final_root_cause=None,
+    note="",
+    log_file=LOG_FILE
+):
     if decision not in ["Accepted", "Edited", "Rejected"]:
         raise ValueError("Invalid review decision")
 
@@ -24,7 +31,7 @@ def review_diagnosis(case_id, ai_response, decision, final_root_cause=None, note
         "timestamp": datetime.now().isoformat()
     }
 
-    with open(LOG_FILE, "a", newline="", encoding="utf-8") as file:
+    with open(log_file, "a", newline="", encoding="utf-8") as file:
         writer = csv.DictWriter(file, fieldnames=row.keys())
 
         if file.tell() == 0:

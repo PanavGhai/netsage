@@ -5,7 +5,7 @@ from datetime import datetime
 LOG_FILE = "logs/verification_log.csv"
 
 
-def verify_review(review):
+def verify_review(review, log_file=LOG_FILE):
     decision = review.get("decision")
 
     if decision == "Rejected":
@@ -26,7 +26,7 @@ def verify_review(review):
         "timestamp": datetime.now().isoformat()
     }
 
-    with open(LOG_FILE, "a", newline="", encoding="utf-8") as file:
+    with open(log_file, "a", newline="", encoding="utf-8") as file:
         writer = csv.DictWriter(file, fieldnames=result.keys())
 
         if file.tell() == 0:

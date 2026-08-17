@@ -1,7 +1,7 @@
 from backend.app import process_case
 
 
-def test_rejected_diagnosis_is_blocked():
+def test_rejected_diagnosis_is_blocked(tmp_path):
     case = {
         "case_id": "NET-002",
         "expected_fault": "Incorrect gateway",
@@ -21,7 +21,9 @@ def test_rejected_diagnosis_is_blocked():
         case,
         config,
         "Rejected",
-        note="AI diagnosis rejected by reviewer"
+        note="AI diagnosis rejected by reviewer",
+        log_file=tmp_path / "review.csv",
+        verification_log_file=tmp_path / "verification.csv"
     )
 
     assert result["review"]["decision"] == "Rejected"

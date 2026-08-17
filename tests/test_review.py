@@ -1,7 +1,7 @@
 from backend.review_service import review_diagnosis
 
 
-def test_accepted_review():
+def test_accepted_review(tmp_path):
     response = {
         "root_cause": "Incorrect gateway"
     }
@@ -9,14 +9,15 @@ def test_accepted_review():
     result = review_diagnosis(
         "NET-001",
         response,
-        "Accepted"
+        "Accepted",
+        log_file=tmp_path / "review.csv"
     )
 
     assert result["decision"] == "Accepted"
     assert result["final_root_cause"] == "Incorrect gateway"
 
 
-def test_edited_review():
+def test_edited_review(tmp_path):
     response = {
         "root_cause": "DNS failure"
     }
@@ -26,14 +27,15 @@ def test_edited_review():
         response,
         "Edited",
         "Incorrect gateway",
-        "Evidence showed gateway problem"
+        "Evidence showed gateway problem",
+        tmp_path / "review.csv"
     )
 
     assert result["decision"] == "Edited"
     assert result["final_root_cause"] == "Incorrect gateway"
 
 
-def test_rejected_review():
+def test_rejected_review(tmp_path):
     response = {
         "root_cause": "DNS failure"
     }
@@ -42,14 +44,15 @@ def test_rejected_review():
         "NET-003",
         response,
         "Rejected",
-        note="Diagnosis was not supported by evidence"
+        note="Diagnosis was not supported",
+        log_file=tmp_path / "review.csv"
     )
 
     assert result["decision"] == "Rejected"
     assert result["final_root_cause"] == ""
 
 
-def test_invalid_review():
+def test_invalid_review(tmp_path):
     response = {
         "root_cause": "DNS failure"
     }
@@ -58,7 +61,8 @@ def test_invalid_review():
         review_diagnosis(
             "NET-004",
             response,
-            "Invalid"
+            "Invalid",
+            log_file=tmp_path / "review.csv"
         )
         assert False
     except ValueError:

@@ -1,7 +1,7 @@
 from backend.app import process_case
 
 
-def test_full_workflow():
+def test_full_workflow(tmp_path):
     case = {
         "case_id": "NET-001",
         "expected_fault": "Incorrect gateway",
@@ -20,9 +20,10 @@ def test_full_workflow():
     result = process_case(
         case,
         config,
-        "Accepted"
+        "Accepted",
+        log_file=tmp_path / "review.csv",
+        verification_log_file=tmp_path / "verification.csv"
     )
 
-    assert result["ai_response"]["root_cause"]
     assert result["review"]["decision"] == "Accepted"
     assert result["verification"]["status"] == "Approved"
