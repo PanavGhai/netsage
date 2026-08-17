@@ -1,0 +1,44 @@
+{
+  "name": "NetSage AI",
+  "description": "AI-Assisted Network Troubleshooting Dashboard",
+  "version": "1.0",
+  "workflow": [
+    "Case Selection",
+    "Network Evidence",
+    "AI Diagnosis",
+    "Human Review",
+    "Verification"
+  ],
+  "sections": [
+    {
+      "id": "case",
+      "title": "Case",
+      "purpose": "Select and inspect a network troubleshooting case"
+    },
+    {
+      "id": "diagnosis",
+      "title": "AI Diagnosis",
+      "purpose": "Display the AI-generated troubleshooting diagnosis"
+    },
+    {
+      "id": "review",
+      "title": "Human Review",
+      "purpose": "Allow a human reviewer to accept, edit, or reject the diagnosis"
+    },
+    {
+      "id": "verification",
+      "title": "Verification",
+      "purpose": "Display whether the reviewed diagnosis is approved or blocked"
+    }
+  ],
+  "review_decisions": [
+    "Accepted",
+    "Edited",
+    "Rejected"
+  ],
+  "verification_states": [
+    "Pending",
+    "Approved",
+    "Blocked"
+  ]
+}

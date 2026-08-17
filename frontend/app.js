@@ -1,234 +1,381 @@
-const caseSelect = document.getElementById("case-select");
+const $ = (id) => document.getElementById(id);
 
-const diagnoseButton = document.getElementById("diagnose-button");
+const API_BASE =
+    window.location.port === "5000"
+        ? ""
+        : "http://127.0.0.1:5000";
 
-const acceptButton = document.getElementById("accept-button");
-const editButton = document.getElementById("edit-button");
-const rejectButton = document.getElementById("reject-button");
+const caseSelect = $("case-select");
+const diagnoseButton = $("diagnose-button");
+const submitReviewButton = $("submit-review-button");
 
-const submitReviewButton = document.getElementById("submit-review-button");
+const decisionButtons = {
+    Accepted: $("accept-button"),
+    Edited: $("edit-button"),
+    Rejected: $("reject-button")
+};
 
 let cases = [];
 let selectedCase = null;
 let selectedReviewDecision = null;
 let currentAiResponse = null;
+function msg(text = "", info = false) {
+    const el = $("page-message");
 
-async function loadCases() {
-    const response = await fetch("/data/cases.json");
-
-    if (!response.ok) {
-        throw new Error("Could not load cases");
-    }
-
-    cases = await response.json();
-
-    for (const item of cases) {
-        const option = document.createElement("option");
-
-        option.value = item.case_id;
-        option.textContent = item.case_id + " - " + item.concept;
-
-        caseSelect.appendChild(option);
-    }
+    el.textContent = text;
+    el.hidden = !text;
+    el.classList.toggle("is-info", info);
 }
 
-function loadSelectedCase() {
-    selectedCase = cases.find(
-        item => item.case_id === caseSelect.value
+function badge(id, text, kind = "neutral") {
+    const el = $(id);
+
+    el.textContent = text;
+    el.className = "status-badge status-" + kind;
+}
+
+function workflow(step) {
+    document.querySelectorAll(".workflow-step").forEach((el, i) => {
+        el.classList.toggle("is-active", i + 1 === step);
+        el.classList.toggle("is-complete", i + 1 < step);
+    });
+}
+
+function reviewEnabled(enabled) {
+    Object.values(decisionButtons).forEach((button) => {
+        button.disabled = !enabled;
+    });
+
+    $("review-notes").disabled = !enabled;
+    submitReviewButton.disabled = !enabled;
+}
+
+function reset() {
+    currentAiResponse = null;
+    selectedReviewDecision = null;
+
+    [
+        "root-cause",
+        "confidence",
+        "osi-layer",
+        "evidence",
+        "next-command",
+        "fix-steps"
+    ].forEach((id) => {
+        $(id).textContent = "—";
+    });
+
+    $("root-cause").hidden = false;
+    $("edited-root-cause").hidden = true;
+    $("edited-root-cause").value = "";
+    $("review-notes").value = "";
+
+    Object.values(decisionButtons).forEach((button) => {
+        button.classList.remove("is-selected");
+    });
+
+    reviewEnabled(false);
+
+    badge(
+        "diagnosis-status",
+        selectedCase ? "READY TO ANALYZE" : "AWAITING CASE",
+        selectedCase ? "info" : "neutral"
     );
 
-    if (!selectedCase) {
-        return;
-    }
+    badge("review-status", "AWAITING AI DIAGNOSIS");
+    badge("verification-status", "PENDING", "pending");
 
-    document.getElementById("symptoms").value =
-        selectedCase.symptom;
-
-    document.getElementById("topology-notes").value =
-        selectedCase.topology;
-
-    document.getElementById("show-output").value =
-        selectedCase.show_output;
+    $("verification-message").textContent =
+        "Submit a human review to receive a verification result.";
 }
 
-function setReviewStatus(status) {
-    document.getElementById("review-status").textContent = status;
-}
+function loadCase() {
+    selectedCase =
+        cases.find((item) => item.case_id === caseSelect.value) || null;
 
+    reset();
+    msg();
+
+    $("symptoms").value = selectedCase?.symptom || "";
+    $("topology-notes").value = selectedCase?.topology || "";
+    $("show-output").value = selectedCase?.show_output || "";
+
+    diagnoseButton.disabled = !selectedCase;
+
+    badge(
+        "case-status",
+        selectedCase ? selectedCase.case_id : "NO CASE SELECTED",
+        selectedCase ? "info" : "neutral"
+    );
+
+    workflow(selectedCase ? 2 : 1);
+}
 
 function showDiagnosis(data) {
     const result = data.ai_response;
 
     currentAiResponse = result;
 
-    document.getElementById("root-cause").textContent =
-        result.root_cause || "-";
+    $("root-cause").textContent = result.root_cause || "—";
+    $("confidence").textContent = result.confidence || "—";
+    $("osi-layer").textContent = result.osi_layer || "—";
 
-    const rootCause = document.getElementById("root-cause");
-    const editedRootCause = document.getElementById("edited-root-cause");
+    $("evidence").textContent =
+        (result.evidence || []).join("\n") || "—";
 
-    rootCause.hidden = false;
-    editedRootCause.hidden = true;
-    editedRootCause.value = "";
+    $("next-command").textContent =
+        result.next_command || "—";
 
-    document.getElementById("confidence").textContent =
-        result.confidence || "-";
+    $("fix-steps").textContent =
+        (result.fix_steps || []).join("\n") || "—";
 
-    document.getElementById("osi-layer").textContent =
-        result.osi_layer || "-";
+    badge("diagnosis-status", "AI RECOMMENDATION", "info");
+    badge("review-status", "AWAITING HUMAN REVIEW", "pending");
 
-    document.getElementById("evidence").textContent =
-        (result.evidence || []).join(", ");
-
-    document.getElementById("next-command").textContent =
-        result.next_command || "-";
-
-    document.getElementById("fix-steps").textContent =
-        (result.fix_steps || []).join(", ");
+    reviewEnabled(true);
+    workflow(3);
 }
-
-
-async function diagnoseCase() {
-    if (!selectedCase) {
-        alert("Select a case first.");
-        return;
-    }
-
-    const caseData = selectedCase;
-
-    const config = {
-        ip: document.getElementById("ip-address").value,
-        mask: document.getElementById("subnet-mask").value,
-        gateway: document.getElementById("default-gateway").value
-    };
+async function api(url, body, label) {
+    let response;
 
     try {
-        const response = await fetch("http://127.0.0.1:5000/api/diagnose", {
+        response = await fetch(url, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({
-                case: caseData,
-                config: config
-            })
+            body: JSON.stringify(body)
         });
+    } catch {
+        throw Error(
+            "Backend unavailable while " +
+            label.toLowerCase() +
+            ". Start the NetSage backend and try again."
+        );
+    }
 
-        const data = await response.json();
+    let data;
 
-        if (!response.ok) {
-            throw new Error(data.error || "Diagnosis failed");
-        }
+    try {
+        data = await response.json();
+    } catch {
+        throw Error(label + " returned an invalid response.");
+    }
 
-        showDiagnosis(data);
+    if (!response.ok) {
+        throw Error(data.error || label);
+    }
 
+    return data;
+}
+
+function config() {
+    return {
+        ip: $("ip-address").value.trim(),
+        mask: $("subnet-mask").value.trim(),
+        gateway: $("default-gateway").value.trim()
+    };
+}
+
+async function diagnose() {
+    if (!selectedCase) {
+        return msg("Select a case before running a diagnosis.");
+    }
+
+    msg("Analyzing case…", true);
+
+    diagnoseButton.disabled = true;
+    diagnoseButton.textContent = "Analyzing case…";
+
+    badge("diagnosis-status", "ANALYZING", "pending");
+
+    try {
+        showDiagnosis(
+            await api(
+                API_BASE + "/api/diagnose",
+                {
+                    case: selectedCase,
+                    config: config()
+                },
+                "Diagnosis failed"
+            )
+        );
+
+        msg();
     } catch (error) {
-        console.error(error);
-        alert("Unable to connect to NetSage backend.");
+        badge("diagnosis-status", "DIAGNOSIS FAILED", "blocked");
+        msg(error.message);
+    } finally {
+        diagnoseButton.disabled = !selectedCase;
+        diagnoseButton.textContent = "Run AI diagnosis";
     }
 }
 
+function choose(decision) {
+    if (!currentAiResponse) {
+        return msg(
+            "Run an AI diagnosis before choosing a review decision."
+        );
+    }
 
-diagnoseButton.addEventListener("click", diagnoseCase);
-caseSelect.addEventListener("change", loadSelectedCase);
+    selectedReviewDecision = decision;
 
+    Object.entries(decisionButtons).forEach(([key, button]) => {
+        button.classList.toggle("is-selected", key === decision);
+    });
 
-acceptButton.addEventListener("click", function () {
-    selectedReviewDecision = "Accepted";
-    setReviewStatus("Accepted");
-});
+    const editing = decision === "Edited";
 
+    $("root-cause").hidden = editing;
+    $("edited-root-cause").hidden = !editing;
 
-editButton.addEventListener("click", function () {
-    selectedReviewDecision = "Edited";
+    if (editing) {
+        $("edited-root-cause").value =
+            $("root-cause").textContent === "—"
+                ? ""
+                : $("root-cause").textContent;
 
-    const rootCause = document.getElementById("root-cause");
-    const editedRootCause = document.getElementById("edited-root-cause");
+        $("edited-root-cause").focus();
+    }
 
-    editedRootCause.value = rootCause.textContent;
-    rootCause.hidden = true;
-    editedRootCause.hidden = false;
-    editedRootCause.focus();
+    badge(
+        "review-status",
+        "HUMAN " + decision.toUpperCase(),
+        decision === "Rejected"
+            ? "rejected"
+            : decision === "Edited"
+                ? "edited"
+                : "approved"
+    );
 
-    setReviewStatus("Edited");
-});
+    msg();
+}
 
-
-rejectButton.addEventListener("click", function () {
-    selectedReviewDecision = "Rejected";
-    setReviewStatus("Rejected");
-});
-
-
-async function submitReview() {
-    if (!selectedCase) {
-        alert("Select a case first.");
-        return;
+async function submit() {
+    if (!currentAiResponse) {
+        return msg("Run an AI diagnosis before submitting a review.");
     }
 
     if (!selectedReviewDecision) {
-        alert("Select Accept, Edit, or Reject first.");
-        return;
+        return msg(
+            "Choose Accept, Edit, or Reject before submitting the review."
+        );
     }
 
-    const config = {
-        ip: document.getElementById("ip-address").value,
-        mask: document.getElementById("subnet-mask").value,
-        gateway: document.getElementById("default-gateway").value
-    };
+    const cause =
+        selectedReviewDecision === "Edited"
+            ? $("edited-root-cause").value.trim()
+            : $("root-cause").textContent;
 
-    let finalRootCause =
-        document.getElementById("root-cause").textContent;
-
-    if (selectedReviewDecision === "Edited") {
-        finalRootCause =
-            document.getElementById("edited-root-cause").value.trim();
-
-        if (!finalRootCause) {
-            alert("Enter a corrected root cause before submitting.");
-            return;
-        }
+    if (selectedReviewDecision === "Edited" && !cause) {
+        return msg(
+            "A corrected root cause is required when editing a diagnosis."
+        );
     }
 
-    const note =
-        document.getElementById("review-notes").value;
+    msg("Submitting human review…", true);
+
+    submitReviewButton.disabled = true;
+    submitReviewButton.textContent = "Submitting review…";
 
     try {
-        const response = await fetch("http://127.0.0.1:5000/api/review", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
+        const data = await api(
+            API_BASE + "/api/review",
+            {
                 case: selectedCase,
-                config: config,
+                config: config(),
                 ai_response: currentAiResponse,
                 review_decision: selectedReviewDecision,
-                final_root_cause: finalRootCause,
-                note: note
-            })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || "Review submission failed");
-        }
-
-        setReviewStatus(
-            data.verification.status
+                final_root_cause: cause,
+                note: $("review-notes").value.trim()
+            },
+            "Review submission failed"
         );
 
-        console.log("Review submitted:", data);
+        const decision = data.review.decision;
+        const verification = data.verification;
 
+        badge(
+            "review-status",
+            "HUMAN " + decision.toUpperCase(),
+            decision === "Rejected"
+                ? "rejected"
+                : decision === "Edited"
+                    ? "edited"
+                    : "approved"
+        );
+
+        badge(
+            "verification-status",
+            verification.status.toUpperCase(),
+            verification.status.toLowerCase() === "approved"
+                ? "approved"
+                : "blocked"
+        );
+
+        $("verification-message").textContent =
+            verification.reason || "Verification completed.";
+
+        workflow(4);
+        reviewEnabled(false);
+        msg();
     } catch (error) {
-        console.error(error);
-        alert("Unable to submit review.");
+        msg(error.message);
+        submitReviewButton.disabled = false;
+    } finally {
+        submitReviewButton.textContent = "Submit human review";
     }
 }
 
-submitReviewButton.addEventListener("click", submitReview);
+async function loadCases() {
+    try {
+        const response = await fetch("/data/cases.json");
 
-loadCases().catch(error => {
-    console.error(error);
+        if (!response.ok) {
+            throw Error();
+        }
+
+        cases = await response.json();
+
+        caseSelect.innerHTML =
+            '<option value="">Select a case</option>';
+
+        cases.forEach((item) => {
+            const option = document.createElement("option");
+
+            option.value = item.case_id;
+            option.textContent =
+                item.case_id + " — " + item.concept;
+
+            caseSelect.appendChild(option);
+        });
+
+        caseSelect.disabled = false;
+
+        $("system-status").textContent =
+            cases.length + " cases available";
+    } catch {
+        caseSelect.innerHTML =
+            '<option value="">Case data unavailable</option>';
+
+        $("system-status").textContent =
+            "Case library unavailable";
+
+        msg(
+            "Case data failed to load. Serve the frontend through " +
+            "the NetSage application and refresh."
+        );
+    }
+}
+
+diagnoseButton.addEventListener("click", diagnose);
+
+caseSelect.addEventListener("change", loadCase);
+
+Object.entries(decisionButtons).forEach(([decision, button]) => {
+    button.addEventListener("click", () => choose(decision));
 });
+
+submitReviewButton.addEventListener("click", submit);
+
+loadCases();

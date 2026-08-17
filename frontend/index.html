@@ -1,130 +1,187 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NetSage AI</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>NetSage AI | Network Troubleshooting</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
+    <header class="site-header">
+        
+        <div>
+            <p class="eyebrow">NETWORK OPERATIONS · HUMAN-IN-THE-LOOP</p>
+            <h1>NetSage <span>AI</span></h1>
+            <p class="subtitle">AI-assisted network troubleshooting with human verification.</p>
+        </div>
 
-    <header>
-        <h1>NetSage AI</h1>
-        <p>AI-Assisted Network Troubleshooting</p>
+        <div id="system-status" class="system-status" role="status">
+            Loading case library…
+        </div>
+    
     </header>
 
-    <main>
+<main>
+    
+    <ol class="workflow" aria-label="Troubleshooting workflow">
+        <li class="workflow-step is-active"><span>01</span> Select case</li>
+        <li class="workflow-step"><span>02</span> AI recommendation</li>
+        <li class="workflow-step"><span>03</span> Human review</li>
+        <li class="workflow-step"><span>04</span> Verification</li>
+    </ol>
+    
+    <p id="page-message" class="page-message" role="alert" hidden></p>
 
-        <section id="case-section">
-            <h2>Case</h2>
+<section class="card" aria-labelledby="case-heading">
+    
+    <div class="card-heading">
+    
+        <div>
+            <p class="section-kicker">01 · CASE CONTEXT</p>
+            <h2 id="case-heading">Select a troubleshooting case</h2>
+        </div>
+        <span id="case-status" class="status-badge status-neutral">NO CASE SELECTED</span>
+    
+    </div>
 
-            <label for="case-select">Case</label>
-            <select id="case-select">
-                <option value="">Select a case</option>
-            </select>
+    <label for="case-select">Case library</label>
 
+    <select id="case-select" disabled>
+        <option value="">Loading cases…</option>
+    </select><div class="case-grid">
+    
+        <div class="field field-wide">
             <label for="symptoms">Symptoms</label>
-            <textarea id="symptoms"></textarea>
+            <textarea id="symptoms" readonly placeholder="Select a case to view its symptoms.">
 
-            <label for="topology-notes">Topology Notes</label>
-            <textarea id="topology-notes"></textarea>
+            </textarea>
+        </div>
 
-            <label for="show-output">Show Command Output</label>
-            <textarea id="show-output"></textarea>
+        <div class="field field-wide">
+            <label for="topology-notes">Topology notes</label>
+            <textarea id="topology-notes" readonly placeholder="Topology details will appear here.">
 
-            <label for="ip-address">IP Address</label>
-            <input id="ip-address" type="text">
+            </textarea>
+        </div>
+        
+        <div class="field field-wide">
+            <label for="show-output">Show command output</label>
+            <textarea id="show-output" class="code-input" readonly placeholder="Command output will appear here.">
 
-            <label for="subnet-mask">Subnet Mask</label>
-            <input id="subnet-mask" type="text">
+            </textarea>
+        </div>
 
-            <label for="default-gateway">Default Gateway</label>
-            <input id="default-gateway" type="text">
+        <div class="field">
+            <label for="ip-address">IP address</label>
+            <input id="ip-address" type="text" placeholder="e.g. 192.168.1.10">
+        </div>
 
-            <button id="diagnose-button">Diagnose</button>
-        </section>
+        <div class="field">
+            <label for="subnet-mask">Subnet mask</label>
+            <input id="subnet-mask" type="text" placeholder="e.g. 255.255.255.0">
+        </div>
 
+        <div class="field">
+            <label for="default-gateway">Default gateway</label>
+            <input id="default-gateway" type="text" placeholder="e.g. 192.168.1.1">
+        </div>
 
-        <section id="diagnosis-section">
-            <h2>AI Diagnosis</h2>
+    </div>
+    <button id="diagnose-button" class="button button-primary" type="button" disabled>Run AI diagnosis</button>
 
-            <p>
-                <strong>Root Cause:</strong>
-                <span id="root-cause">-</span>
-                <input
-                    id="edited-root-cause"
-                    type="text"
-                    placeholder="Enter corrected root cause"
-                    hidden
-                >
-            </p>
+</section>
 
-            <p>
-                <strong>Confidence:</strong>
-                <span id="confidence">-</span>
-            </p>
+<section class="card" aria-labelledby="diagnosis-heading">
 
-            <p>
-                <strong>OSI Layer:</strong>
-                <span id="osi-layer">-</span>
-            </p>
+    <div class="card-heading">
+        <div>
+            <p class="section-kicker ai-kicker">02 · AI RECOMMENDATION</p>
+            <h2 id="diagnosis-heading">Diagnosis requires human review</h2>
+        </div>
+        <span id="diagnosis-status" class="status-badge status-neutral">AWAITING CASE</span>
+    </div>
 
-            <p>
-                <strong>Evidence:</strong>
-                <span id="evidence">-</span>
-            </p>
+    <p class="safety-note">This is an AI recommendation only. No network configuration is changed by NetSage.</p>
+    <dl class="diagnosis-grid">
+    
+        <div class="diagnosis-item diagnosis-item-wide">
+            <dt>Root cause</dt>
+            <dd id="root-cause">—</dd>
+            <input id="edited-root-cause" type="text" placeholder="Enter corrected root cause" hidden>
+        </div>
+    
+        <div class="diagnosis-item">
+            <dt>Confidence</dt>
+            <dd id="confidence">—</dd>
+        </div>
+    
+        <div class="diagnosis-item">
+            <dt>OSI layer</dt>
+            <dd id="osi-layer">—</dd>
+        </div>
+    
+        <div class="diagnosis-item diagnosis-item-wide">
+            <dt>Evidence</dt>
+            <dd id="evidence">—</dd>
+        </div>
+    
+        <div class="diagnosis-item">
+            <dt>Next diagnostic command</dt>
+            <dd id="next-command" class="command">—</dd>
+        </div>
+    
+        <div class="diagnosis-item">
+            <dt>Recommended fix steps</dt>
+            <dd id="fix-steps">—</dd>
+        </div>    
 
-            <p>
-                <strong>Next Command:</strong>
-                <span id="next-command">-</span>
-            </p>
+    </dl>
 
-            <p>
-                <strong>Fix Steps:</strong>
-                <span id="fix-steps">-</span>
-            </p>
-        </section>
+</section>
 
+<section class="card" aria-labelledby="review-heading">
+    
+    <div class="card-heading">
+    
+        <div>
+            <p class="section-kicker human-kicker">03 · HUMAN REVIEW</p>
+            <h2 id="review-heading">Review the AI recommendation</h2>
+        </div>
+    
+        <span id="review-status" class="status-badge status-neutral">AWAITING AI DIAGNOSIS</span>
+    </div>
+    <p class="helper-text">Select a decision, add notes if useful, then submit it for verification.</p>
+    
+    <div class="decision-buttons" role="group" aria-label="Human review decision">
+        <button id="accept-button" class="button button-decision" type="button" disabled>Accept</button>
+        <button id="edit-button" class="button button-decision" type="button" disabled>Edit</button>
+        <button id="reject-button" class="button button-decision button-reject" type="button" disabled>Reject</button>
+    </div>
+    
+    <label for="review-notes">Reviewer notes</label>
+    <textarea id="review-notes" placeholder="Optional rationale for this decision." disabled></textarea>
+    <button id="submit-review-button" class="button button-primary" type="button" disabled>Submit human review</button>
 
-        <section id="review-section">
-            <h2>Human Review</h2>
+</section>
 
-            <button id="accept-button">Accept</button>
-            <button id="edit-button">Edit</button>
-            <button id="reject-button">Reject</button>
+<section class="card" aria-labelledby="verification-heading">
+    
+    <div class="card-heading">
+        
+        <div>
+            <p class="section-kicker verify-kicker">04 · VERIFICATION</p>
+            <h2 id="verification-heading">Verification result</h2>
+        </div>
+        
+        <span id="verification-status" class="status-badge status-neutral">PENDING</span>
+    </div>
+    
+    <p id="verification-message" class="verification-message">Submit a human review to receive a verification result.</p>
 
-            <label for="review-notes">Reviewer Notes</label>
-            <textarea id="review-notes"></textarea>
+</section>
 
-            <button id="submit-review-button">
-                Submit Review
-            </button>
+</main>
 
-            <p>
-                Review Status:
-                <span id="review-status">Pending</span>
-            </p>
-        </section>
-
-
-        <section id="verification-section">
-            <h2>Verification</h2>
-
-            <p>
-                Status:
-                <span id="verification-status">Pending</span>
-            </p>
-
-            <p>
-                Message:
-                <span id="verification-message">-</span>
-            </p>
-        </section>
-
-    </main>
-
-    <script src="app.js"></script>
-
-</body>
-</html>
+<script src="app.js"></script></body></html>
