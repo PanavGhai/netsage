@@ -10,6 +10,7 @@ const submitReviewButton = document.getElementById("submit-review-button");
 
 let cases = [];
 let selectedCase = null;
+let selectedReviewDecision = null;
 
 async function loadCases() {
     const response = await fetch("/data/cases.json");
@@ -82,7 +83,7 @@ async function diagnoseCase() {
         alert("Select a case first.");
         return;
     }
-    
+
     const caseData = selectedCase;
 
     const config = {
@@ -123,23 +124,80 @@ caseSelect.addEventListener("change", loadSelectedCase);
 
 
 acceptButton.addEventListener("click", function () {
+    selectedReviewDecision = "Accepted";
     setReviewStatus("Accepted");
 });
 
 
 editButton.addEventListener("click", function () {
+    selectedReviewDecision = "Edited";
     setReviewStatus("Edited");
 });
 
 
 rejectButton.addEventListener("click", function () {
+    selectedReviewDecision = "Rejected";
     setReviewStatus("Rejected");
 });
 
 
-submitReviewButton.addEventListener("click", function () {
-    console.log("Review submitted");
-});
+async function submitReview() {
+    if (!selectedCase) {
+        alert("Select a case first.");
+        return;
+    }
+
+    if (!selectedReviewDecision) {
+        alert("Select Accept, Edit, or Reject first.");
+        return;
+    }
+
+    const config = {
+        ip: document.getElementById("ip-address").value,
+        mask: document.getElementById("subnet-mask").value,
+        gateway: document.getElementById("default-gateway").value
+    };
+
+    const finalRootCause =
+        document.getElementById("root-cause").textContent;
+
+    const note =
+        document.getElementById("review-notes").value;
+
+    try {
+        const response = await fetch("http://127.0.0.1:5000/api/review", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                case: selectedCase,
+                config: config,
+                review_decision: selectedReviewDecision,
+                final_root_cause: finalRootCause,
+                note: note
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || "Review submission failed");
+        }
+
+        setReviewStatus(
+            data.verification.status
+        );
+
+        console.log("Review submitted:", data);
+
+    } catch (error) {
+        console.error(error);
+        alert("Unable to submit review.");
+    }
+}
+
+submitReviewButton.addEventListener("click", submitReview);
 
 loadCases().catch(error => {
     console.error(error);

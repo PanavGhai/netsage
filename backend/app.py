@@ -76,6 +76,35 @@ def api_diagnose():
         "ai_response": ai_response
     })
 
+@app.route("/api/review", methods=["POST"])
+def api_review():
+    data = request.get_json()
+
+    case = data.get("case")
+    config = data.get("config", {})
+    review_decision = data.get("review_decision")
+    final_root_cause = data.get("final_root_cause")
+    note = data.get("note", "")
+
+    if not case:
+        return jsonify({
+            "error": "Case is required"
+        }), 400
+
+    if review_decision not in ["Accepted", "Edited", "Rejected"]:
+        return jsonify({
+            "error": "Invalid review decision"
+        }), 400
+
+    result = process_case(
+        case=case,
+        config=config,
+        review_decision=review_decision,
+        final_root_cause=final_root_cause,
+        note=note
+    )
+
+    return jsonify(result)
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
