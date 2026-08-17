@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetSage AI</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <header>
+        <h1>NetSage AI</h1>
+        <p>AI-Assisted Network Troubleshooting</p>
+    </header>
+
+    <main>
+
+        <section id="case-section">
+            <h2>Case</h2>
+
+            <label for="case-select">Case</label>
+            <select id="case-select">
+                <option value="">Select a case</option>
+            </select>
+
+            <label for="symptoms">Symptoms</label>
+            <textarea id="symptoms"></textarea>
+
+            <label for="topology-notes">Topology Notes</label>
+            <textarea id="topology-notes"></textarea>
+
+            <label for="show-output">Show Command Output</label>
+            <textarea id="show-output"></textarea>
+
+            <label for="ip-address">IP Address</label>
+            <input id="ip-address" type="text">
+
+            <label for="subnet-mask">Subnet Mask</label>
+            <input id="subnet-mask" type="text">
+
+            <label for="default-gateway">Default Gateway</label>
+            <input id="default-gateway" type="text">
+
+            <button id="diagnose-button">Diagnose</button>
+        </section>
+
+
+        <section id="diagnosis-section">
+            <h2>AI Diagnosis</h2>
+
+            <p>
+                <strong>Root Cause:</strong>
+                <span id="root-cause">-</span>
+            </p>
+
+            <p>
+                <strong>Confidence:</strong>
+                <span id="confidence">-</span>
+            </p>
+
+            <p>
+                <strong>OSI Layer:</strong>
+                <span id="osi-layer">-</span>
+            </p>
+
+            <p>
+                <strong>Evidence:</strong>
+                <span id="evidence">-</span>
+            </p>
+
+            <p>
+                <strong>Next Command:</strong>
+                <span id="next-command">-</span>
+            </p>
+
+            <p>
+                <strong>Fix Steps:</strong>
+                <span id="fix-steps">-</span>
+            </p>
+        </section>
+
+
+        <section id="review-section">
+            <h2>Human Review</h2>
+
+            <button id="accept-button">Accept</button>
+            <button id="edit-button">Edit</button>
+            <button id="reject-button">Reject</button>
+
+            <label for="review-notes">Reviewer Notes</label>
+            <textarea id="review-notes"></textarea>
+
+            <button id="submit-review-button">
+                Submit Review
+            </button>
+
+            <p>
+                Review Status:
+                <span id="review-status">Pending</span>
+            </p>
+        </section>
+
+
+        <section id="verification-section">
+            <h2>Verification</h2>
+
+            <p>
+                Status:
+                <span id="verification-status">Pending</span>
+            </p>
+
+            <p>
+                Message:
+                <span id="verification-message">-</span>
+            </p>
+        </section>
+
+    </main>
+
+    <script src="app.js"></script>
+
+</body>
+</html>
