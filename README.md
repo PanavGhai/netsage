@@ -14,6 +14,25 @@ It is a decision-support tool: it never applies network configuration changes or
 - Requires a human reviewer to accept, edit, or reject the recommendation.
 - Marks accepted and edited reviews as `Approved`; rejected reviews are `Blocked`.
 - Records review and verification decisions in CSV audit logs.
+- Displays dashboard visualizations for issue types, severity, and AI-to-human agreement.
+
+## Case coverage
+
+The case library contains 30 structured troubleshooting scenarios across nine networking domains:
+
+| Domain | Cases |
+| --- | --- |
+| VLAN | `NET-001`–`NET-004` |
+| Default Gateway | `NET-005`–`NET-007` |
+| DHCP | `NET-008`–`NET-011` |
+| DNS | `NET-012`–`NET-014` |
+| Static Routing | `NET-015`–`NET-018` |
+| Dynamic Routing | `NET-019`–`NET-021` |
+| ACL | `NET-022`–`NET-025` |
+| NAT | `NET-026`–`NET-028` |
+| Wireless | `NET-029`–`NET-030` |
+
+Every case includes a symptom, topology description, show-command output, expected fault, OSI layer, severity, next diagnostic command, and recommended corrective action. The dashboard and its metrics use `data/cases.json`; `data/cases.csv` is the source file used by the included CSV-to-JSON conversion utility.
 
 ## Workflow
 
@@ -36,7 +55,7 @@ Select case and provide configuration data
           Review and verification logs
 ```
 
-The web dashboard makes the AI recommendation, human decision, and verification result separate states. An AI response alone is not an approved diagnosis.
+The web dashboard makes the AI recommendation, human decision, and verification result separate states. It also summarizes the case library by troubleshooting concept and severity, then derives AI-to-human agreement from the review log. Agreement means the reviewer selected `Accepted` without changing or rejecting the AI recommendation. An AI response alone is not an approved diagnosis.
 
 ## Architecture
 
@@ -48,8 +67,57 @@ The web dashboard makes the AI recommendation, human decision, and verification 
 | `backend/ai_service.py` | Gemini integration, response validation, and deterministic fallback. |
 | `backend/review_service.py` | Records the human review decision. |
 | `backend/verification.py` | Converts a review decision into an approved or blocked result. |
-| `data/cases.json` | The case library used by the dashboard. |
+| `data/cases.json` | Case library loaded by the dashboard and used for dashboard metrics. |
+| `data/cases.csv` | Source case dataset for the included `data/csv_to_json.py` conversion utility. |
 | `logs/` | Runtime CSV audit logs for reviews and verification. |
+
+## Prompt library
+
+The prompt library is stored in `prompts/`.
+
+- `diagnose_prompt.md` defines the structured diagnosis prompt and required JSON response fields.
+- `system_prompt.md` defines the system-level safety, evidence-grounding, and human-review rules.
+- `few_shot_examples.md` contains three worked examples covering VLAN, default-gateway, and missing-route diagnosis.
+
+The worked examples show how symptoms and evidence should lead to a diagnosis, confidence level, next diagnostic command, and safe fix steps.
+
+## Rule checker validation
+
+The deterministic checker sample execution is recorded in `examples/rule_checker_sample.txt`.
+
+It demonstrates detection of five configuration problems:
+
+1. Default gateway mismatch
+2. Missing default gateway
+3. Incorrect static-route next hop
+4. Missing OSPF route advertisement
+5. NAT network mismatch
+
+Known deterministic findings are preserved as authoritative root-cause information before or alongside AI diagnosis.
+
+## Ground-truth evaluation
+
+Each case's `expected_fault` field is the ground-truth diagnosis. Diagnoses are evaluated against this field across the full 30-case library. The current result is 30 evaluated cases, 28 matching diagnoses, and 93.3% accuracy.
+
+Ground-truth evaluation is separate from human-review agreement: a matching diagnosis still requires human review before approval.
+
+## Responsible AI evaluation
+
+`responsible_ai/responsible_ai_log.md` documents five human interventions—corrections or rejections of AI diagnoses—showing that NetSage is evaluated as a decision-support system rather than an autonomous network-management tool.
+
+## Current evaluation results
+
+| Metric | Result |
+| --- | ---: |
+| Cases | 30 |
+| Ground-truth evaluations | 30 |
+| Ground-truth matches | 28 |
+| Ground-truth accuracy | 93.3% |
+| Human reviews | 35 |
+| Accepted | 26 |
+| Edited | 6 |
+| Rejected | 3 |
+| AI-to-human agreement | 74.3% |
 
 ## Requirements
 
@@ -112,7 +180,7 @@ service : NetSage AI
 
 1. Open the dashboard and choose a case from the case library.
 2. Review the supplied symptom, topology, and command output.
-3. Optionally enter IP address, subnet mask, and default gateway values to exercise the deterministic checks.
+3. Review or enter the observed IP address, subnet mask, and default gateway values for the selected lab case.
 4. Select **Run AI diagnosis**.
 5. Review the recommendation, supporting evidence, confidence, OSI layer, next command, and proposed fix steps.
 6. Choose **Accept**, **Edit**, or **Reject**. Editing requires a corrected root cause.
@@ -146,6 +214,10 @@ Returns `case_id`, `checker_findings`, and `ai_response`.
 
 Requires the case, the returned AI response, and one of `Accepted`, `Edited`, or `Rejected`. It returns both the persisted review record and verification result.
 
+### `GET /api/dashboard`
+
+Returns the dashboard summary derived from `data/cases.json` and `logs/review_log.csv`: issue-type counts, severity counts, review decisions, and the accepted-review agreement rate. The browser refreshes these metrics after each submitted human review.
+
 ## Testing
 
 Run the automated suite from the repository root:
@@ -154,7 +226,7 @@ Run the automated suite from the repository root:
 python -m pytest
 ```
 
-The suite currently contains 16 tests covering deterministic checks, response validation and fallback behavior, review decisions, verification rules, the full workflow, and rejection blocking.
+The suite currently contains 17 tests covering deterministic checks, response validation and fallback behavior, review decisions, verification rules, the full workflow, rejection blocking, and dashboard metrics.
 
 ## Safety and responsible AI
 
@@ -178,8 +250,10 @@ NetSage is designed for educational Cisco-style troubleshooting cases and contro
 backend/          Flask API, AI service, review, and verification
 checker/          Deterministic network checks
 data/             Case library and data utilities
+examples/         Rule checker sample execution log
 frontend/         Dashboard HTML, CSS, and JavaScript
 logs/             Runtime review and verification audit logs
+prompts/          Structured AI prompts and few-shot examples
 responsible_ai/   Responsible-AI documentation
 tests/            Automated pytest suite
 ```

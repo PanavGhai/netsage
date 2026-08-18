@@ -169,6 +169,101 @@ async function api(url, body, label) {
     return data;
 }
 
+async function getApi(url, label) {
+    let response;
+
+    try {
+        response = await fetch(url);
+    } catch {
+        throw Error(label + " is unavailable.");
+    }
+
+    if (!response.ok) {
+        throw Error(label + " could not be loaded.");
+    }
+
+    return response.json();
+}
+
+function renderBars(id, values, modifier = "") {
+    const container = $(id);
+    const entries = Object.entries(values || {});
+    const max = Math.max(...entries.map(([, value]) => value), 1);
+
+    container.replaceChildren();
+
+    entries.forEach(([label, value]) => {
+        const row = document.createElement("div");
+        const name = document.createElement("span");
+        const track = document.createElement("div");
+        const fill = document.createElement("div");
+        const count = document.createElement("strong");
+
+        row.className = "bar-row";
+        name.className = "bar-label";
+        name.textContent = label;
+        track.className = "bar-track";
+        fill.className = "bar-fill " + modifier;
+        fill.style.width = (value / max) * 100 + "%";
+        count.textContent = value;
+
+        track.appendChild(fill);
+        row.append(name, track, count);
+        container.appendChild(row);
+    });
+}
+
+async function loadDashboard() {
+    try {
+        const metrics = await getApi(API_BASE + "/api/dashboard", "Dashboard metrics");
+
+        renderBars("issue-types-chart", metrics.issue_types);
+        renderBars("severity-chart", metrics.severity_distribution, "severity");
+        renderBars("review-decisions-chart", metrics.review_decisions, "reviews");
+
+        const agreement = metrics.agreement;
+        const summary = $("agreement-summary");
+
+        if (agreement.rate === null) {
+            badge("agreement-rate", "NO REVIEWS YET");
+            summary.textContent = "No human reviews recorded yet.";
+        } else {
+            badge("agreement-rate", agreement.rate + "% AGREEMENT", "approved");
+            summary.textContent = agreement.rate + "% agreement (" +
+                agreement.accepted + " accepted of " + agreement.reviewed + " reviews)";
+        }
+
+        const groundTruth = metrics.ground_truth;
+        const groundTruthAccuracy = $("ground-truth-accuracy");
+        const groundTruthSummary = $("ground-truth-summary");
+
+        if (groundTruth && groundTruth.evaluated > 0) {
+            groundTruthAccuracy.textContent =
+                groundTruth.accuracy + "% accuracy";
+
+            groundTruthSummary.textContent =
+                groundTruth.matches + " of " +
+                groundTruth.evaluated +
+                " AI diagnoses matched the expected fault.";
+        } else {
+            groundTruthAccuracy.textContent = "No evaluation data yet.";
+            groundTruthSummary.textContent =
+                "Ground-truth evaluation is not available.";
+        }
+    } catch {
+        badge("agreement-rate", "METRICS UNAVAILABLE", "blocked");
+
+        $("agreement-summary").textContent =
+            "Start the NetSage backend to load dashboard metrics.";
+
+        $("ground-truth-accuracy").textContent =
+            "Metrics unavailable.";
+
+        $("ground-truth-summary").textContent =
+            "Start the NetSage backend to load ground-truth evaluation.";
+    }
+}
+
 function config() {
     return {
         ip: $("ip-address").value.trim(),
@@ -318,6 +413,7 @@ async function submit() {
 
         workflow(4);
         reviewEnabled(false);
+        loadDashboard();
         msg();
     } catch (error) {
         msg(error.message);
@@ -379,3 +475,4 @@ Object.entries(decisionButtons).forEach(([decision, button]) => {
 submitReviewButton.addEventListener("click", submit);
 
 loadCases();
+loadDashboard();

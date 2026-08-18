@@ -1,1 +1,36 @@
 case_id,decision,status,reason,timestamp
+NET-001,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:25:06.148544
+NET-002,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:26:14.148544
+NET-003,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:27:22.148544
+NET-004,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:28:30.148544
+NET-005,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:29:38.148544
+NET-006,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:30:46.148544
+NET-007,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:31:54.148544
+NET-008,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:33:02.148544
+NET-009,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:34:10.148544
+NET-010,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:35:18.148544
+NET-011,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:36:26.148544
+NET-012,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:37:34.148544
+NET-013,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:38:42.148544
+NET-014,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:39:50.148544
+NET-015,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:40:58.148544
+NET-016,Edited,Approved,Human reviewer edited and approved the diagnosis,2026-08-18T05:42:06.148544
+NET-017,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:43:14.148544
+NET-018,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:44:22.148544
+NET-019,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:45:30.148544
+NET-020,Edited,Approved,Human reviewer edited and approved the diagnosis,2026-08-18T05:46:38.148544
+NET-021,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:47:46.148544
+NET-022,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:48:54.148544
+NET-023,Edited,Approved,Human reviewer edited and approved the diagnosis,2026-08-18T05:50:02.148544
+NET-024,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:51:10.148544
+NET-025,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:52:18.148544
+NET-026,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:53:26.148544
+NET-027,Rejected,Blocked,Human reviewer rejected the diagnosis,2026-08-18T05:54:34.148544
+NET-028,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:55:42.148544
+NET-029,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:56:50.148544
+NET-030,Accepted,Approved,Human reviewer approved the diagnosis,2026-08-18T05:57:58.148544
+NET-005,Edited,Approved,Human reviewer approved the diagnosis,2026-08-18T05:54:05.809361
+NET-016,Edited,Approved,Human reviewer approved the diagnosis,2026-08-18T06:03:03.329142
+NET-020,Edited,Approved,Human reviewer approved the diagnosis,2026-08-18T06:03:40.412150
+NET-023,Rejected,Blocked,Human reviewer rejected the diagnosis,2026-08-18T06:04:23.809684
+NET-028,Rejected,Blocked,Human reviewer rejected the diagnosis,2026-08-18T06:05:05.059822

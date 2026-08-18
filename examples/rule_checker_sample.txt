@@ -1,0 +1,83 @@
+NetSage AI - Rule Checker Sample Execution Log
+================================================
+
+Sample 1: NET-005 - Default Gateway Mismatch
+------------------------------------------------
+Input:
+IP Address: 192.168.10.25
+Subnet Mask: 255.255.255.0
+Gateway: 192.168.20.1
+
+Rule Checker Result:
+Gateway 192.168.20.1 is outside the local subnet 192.168.10.0/24.
+
+Result:
+PASS - Deterministic checker identified the gateway/subnet mismatch.
+
+
+Sample 2: NET-006 - Missing Default Gateway
+------------------------------------------------
+Input:
+IP Address: 192.168.10.25
+Subnet Mask: 255.255.255.0
+Gateway: 0.0.0.0
+
+Rule Checker Result:
+Default gateway is missing.
+
+Result:
+PASS - Deterministic checker identified the missing gateway.
+
+
+Sample 3: NET-016 - Incorrect Static Route Next Hop
+------------------------------------------------
+Input:
+Destination Network: 192.168.30.0/24
+Configured Next Hop: 10.0.0.6
+Expected R2 Next Hop: 10.0.0.2
+
+Rule Checker Result:
+Static route uses an incorrect next-hop address.
+
+Result:
+PASS - Deterministic checker identified the incorrect next hop.
+
+
+Sample 4: NET-020 - Missing OSPF Route Advertisement
+------------------------------------------------
+Input:
+OSPF Neighbor: R2 FULL
+Server Network: 192.168.30.0/24
+R1 Routing Table: No OSPF route to 192.168.30.0/24
+
+Rule Checker Result:
+Server network is not being advertised into OSPF by R2.
+
+Result:
+PASS - Deterministic checker identified the missing route advertisement.
+
+
+Sample 5: NET-028 - NAT Network Mismatch
+------------------------------------------------
+Input:
+Actual LAN Network: 192.168.10.0/24
+NAT ACL:
+permit 192.168.20.0 0.0.0.255
+
+Rule Checker Result:
+NAT ACL permits the wrong internal network.
+
+Result:
+PASS - Deterministic checker identified the NAT network mismatch.
+
+
+Summary
+================================================
+Deterministic rule checker successfully identified
+configuration problems in all five sample cases.
+
+The rule checker operates before or alongside AI diagnosis.
+Known deterministic findings are preserved as authoritative
+root-cause information.
+
+Human review remains mandatory before a diagnosis is approved.

@@ -34,6 +34,43 @@
     
     <p id="page-message" class="page-message" role="alert" hidden></p>
 
+    <section class="metrics-card" aria-labelledby="metrics-heading">
+        <div class="card-heading">
+            <div>
+                <p class="section-kicker">DASHBOARD SUMMARY</p>
+                <h2 id="metrics-heading">Case and review metrics</h2>
+            </div>
+            <span id="agreement-rate" class="status-badge status-neutral">LOADING METRICS</span>
+        </div>
+
+        <div class="metrics-grid">
+            <article class="metric-panel" aria-labelledby="issue-types-heading">
+                <h3 id="issue-types-heading">Issue types</h3>
+                <p class="metric-helper">Cases by troubleshooting concept</p>
+                <div id="issue-types-chart" class="bar-chart" aria-live="polite"></div>
+            </article>
+
+            <article class="metric-panel" aria-labelledby="severity-heading">
+                <h3 id="severity-heading">Severity distribution</h3>
+                <p class="metric-helper">Cases by recorded severity</p>
+                <div id="severity-chart" class="bar-chart" aria-live="polite"></div>
+            </article>
+
+            <article class="metric-panel" aria-labelledby="human-review-heading">
+                <h3 id="human-review-heading">AI vs. human review</h3>
+                <p id="agreement-summary" class="agreement-value">No human reviews recorded yet.</p>
+                <div id="review-decisions-chart" class="bar-chart" aria-live="polite"></div>
+                <p class="metric-helper">Agreement is the percentage of submitted reviews accepted without changes.</p>
+            </article>
+
+            <article class="metric-panel" aria-labelledby="ground-truth-heading">
+                <h3 id="ground-truth-heading">Ground-truth evaluation</h3>
+                <p id="ground-truth-accuracy" class="agreement-value">No evaluation data yet.</p>
+                <p id="ground-truth-summary" class="metric-helper">AI diagnosis accuracy against the expected faults.</p>
+            </article>
+        </div>
+    </section>
+
 <section class="card" aria-labelledby="case-heading">
     
     <div class="card-heading">
