@@ -20,6 +20,8 @@ CORS(app)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CASES_FILE = PROJECT_ROOT / "data" / "cases.json"
 REVIEW_LOG_FILE = PROJECT_ROOT / "logs" / "review_log.csv"
+VERIFICATION_LOG_FILE = PROJECT_ROOT / "logs" / "verification_log.csv"
+AI_PROVIDERS = {"gemini", "lmstudio"}
 
 
 def dashboard_metrics(cases_file=CASES_FILE, review_log_file=REVIEW_LOG_FILE):
@@ -122,43 +124,6 @@ def dashboard_metrics(cases_file=CASES_FILE, review_log_file=REVIEW_LOG_FILE):
         }
     }
 
-
-def process_case(
-    case,
-    config,
-    review_decision,
-    final_root_cause=None,
-    note="",
-    log_file="logs/review_log.csv",
-    verification_log_file="logs/verification_log.csv"
-):
-    findings = run_checks(config)
-
-    ai_response = diagnose(case, findings)
-
-    review = review_diagnosis(
-        case["case_id"],
-        ai_response,
-        review_decision,
-        final_root_cause,
-        note,
-        log_file
-    )
-
-    verification = verify_review(
-        review,
-        verification_log_file
-    )
-
-    return {
-        "case_id": case["case_id"],
-        "checker_findings": findings,
-        "ai_response": ai_response,
-        "review": review,
-        "verification": verification
-    }
-
-
 @app.route("/api/health", methods=["GET"])
 def health():
     return jsonify({
@@ -174,18 +139,70 @@ def api_dashboard():
 
 @app.route("/api/diagnose", methods=["POST"])
 def api_diagnose():
-    data = request.get_json()
+    print("=== DIAGNOSE REQUEST ===")
+    print("Content-Type:", request.content_type)
+    print("Raw body:", request.get_data(as_text=True))
+
+    data = request.get_json(silent=True)
+
+    print("Parsed JSON:", data)
+    print("========================")
+
+    if data is None:
+        return jsonify({
+            "error": "Request body is not valid JSON",
+            "content_type": request.content_type,
+            "raw_body": request.get_data(as_text=True)
+        }), 400
 
     case = data.get("case")
     config = data.get("config", {})
+    provider = data.get("provider")
 
     if not case:
         return jsonify({
             "error": "Case is required"
         }), 400
 
-    findings = run_checks(config)
-    ai_response = diagnose(case, findings)
+    if provider not in AI_PROVIDERS:
+        return jsonify({
+            "error": "AI provider must be either 'gemini' or 'lmstudio'"
+        }), 400
+
+    checker_input = {
+        **config
+    }
+
+    if "vlan" in case:
+        checker_input["vlan"] = case["vlan"]
+
+    if "existing_vlans" in case:
+        checker_input["existing_vlans"] = case["existing_vlans"]
+
+    if "interface_vlan" in case:
+        checker_input["interface_vlan"] = case["interface_vlan"]
+
+    if "interface_status" in case:
+        checker_input["interface_status"] = case["interface_status"]
+
+    if "required_network" in case:
+        checker_input["required_network"] = case["required_network"]
+
+    if "routes" in case:
+        checker_input["routes"] = case["routes"]
+
+    findings = run_checks(checker_input)
+
+    try:
+        ai_response = diagnose(
+            case,
+            findings,
+            provider=provider
+        )
+    except Exception as error:
+        return jsonify({
+            "error": f"{provider.upper()} diagnosis failed: {error}"
+        }), 502
 
     evaluation = evaluate_diagnosis(
         case,
@@ -196,7 +213,8 @@ def api_diagnose():
         "case_id": case["case_id"],
         "checker_findings": findings,
         "ai_response": ai_response,
-        "evaluation": evaluation
+        "evaluation": evaluation,
+        "provider": provider
     })
 
 @app.route("/api/review", methods=["POST"])
@@ -229,10 +247,14 @@ def api_review():
         ai_response,
         review_decision,
         final_root_cause,
-        note
+        note,
+        log_file=REVIEW_LOG_FILE
     )
 
-    verification = verify_review(review)
+    verification = verify_review(
+        review,
+        log_file=VERIFICATION_LOG_FILE
+    )
 
     return jsonify({
         "case_id": case["case_id"],

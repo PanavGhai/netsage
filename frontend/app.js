@@ -8,6 +8,7 @@ const API_BASE =
 const caseSelect = $("case-select");
 const diagnoseButton = $("diagnose-button");
 const submitReviewButton = $("submit-review-button");
+const aiProvider = $("ai-provider");
 
 const decisionButtons = {
     Accepted: $("accept-button"),
@@ -116,6 +117,11 @@ function showDiagnosis(data) {
 
     currentAiResponse = result;
 
+    const providerName =
+        data.provider === "lmstudio"
+            ? "LOCAL LLM"
+            : "GEMINI";
+
     $("root-cause").textContent = result.root_cause || "—";
     $("confidence").textContent = result.confidence || "—";
     $("osi-layer").textContent = result.osi_layer || "—";
@@ -129,7 +135,12 @@ function showDiagnosis(data) {
     $("fix-steps").textContent =
         (result.fix_steps || []).join("\n") || "—";
 
-    badge("diagnosis-status", "AI RECOMMENDATION", "info");
+    badge(
+        "diagnosis-status",
+        providerName + " RECOMMENDATION",
+        "info"
+    );
+
     badge("review-status", "AWAITING HUMAN REVIEW", "pending");
 
     reviewEnabled(true);
@@ -265,11 +276,33 @@ async function loadDashboard() {
 }
 
 function config() {
-    return {
+    const result = {
         ip: $("ip-address").value.trim(),
         mask: $("subnet-mask").value.trim(),
         gateway: $("default-gateway").value.trim()
     };
+
+    if (selectedCase?.vlan !== undefined) {
+        result.vlan = selectedCase.vlan;
+    }
+
+    if (selectedCase?.existing_vlans !== undefined) {
+        result.existing_vlans = selectedCase.existing_vlans;
+    }
+
+    if (selectedCase?.interface_status !== undefined) {
+        result.interface_status = selectedCase.interface_status;
+    }
+
+    if (selectedCase?.required_network !== undefined) {
+        result.required_network = selectedCase.required_network;
+    }
+
+    if (selectedCase?.routes !== undefined) {
+        result.routes = selectedCase.routes;
+    }
+
+    return result;
 }
 
 async function diagnose() {
@@ -277,27 +310,44 @@ async function diagnose() {
         return msg("Select a case before running a diagnosis.");
     }
 
-    msg("Analyzing case…", true);
+    const provider = aiProvider.value;
+
+    msg(
+        "Analyzing case with " +
+        (provider === "lmstudio" ? "Local LLM" : "Gemini") +
+        "…",
+        true
+    );
 
     diagnoseButton.disabled = true;
     diagnoseButton.textContent = "Analyzing case…";
 
-    badge("diagnosis-status", "ANALYZING", "pending");
+    badge(
+        "diagnosis-status",
+        provider === "lmstudio"
+            ? "ANALYZING WITH LOCAL LLM"
+            : "ANALYZING WITH GEMINI",
+        "pending"
+    );
 
     try {
-        showDiagnosis(
-            await api(
-                API_BASE + "/api/diagnose",
-                {
-                    case: selectedCase,
-                    config: config()
-                },
-                "Diagnosis failed"
-            )
+        const data = await api(
+            API_BASE + "/api/diagnose",
+            {
+                case: selectedCase,
+                config: config(),
+                provider: provider
+            },
+            "Diagnosis failed"
         );
+
+        console.log("DIAGNOSIS RESPONSE:", data);
+
+        showDiagnosis(data);
 
         msg();
     } catch (error) {
+        console.error("DIAGNOSIS FRONTEND ERROR:", error);
         badge("diagnosis-status", "DIAGNOSIS FAILED", "blocked");
         msg(error.message);
     } finally {
@@ -473,6 +523,15 @@ Object.entries(decisionButtons).forEach(([decision, button]) => {
 });
 
 submitReviewButton.addEventListener("click", submit);
+
+aiProvider.addEventListener("change", () => {
+    if (selectedCase) {
+        reset();
+        badge("diagnosis-status", "READY TO ANALYZE", "info");
+        msg("AI provider changed. Run the diagnosis again.", true);
+        workflow(2);
+    }
+});
 
 loadCases();
 loadDashboard();

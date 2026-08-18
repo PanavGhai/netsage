@@ -21,6 +21,14 @@
             Loading case library…
         </div>
     
+        <div class="ai-provider-control">
+            <label for="ai-provider">AI Provider</label>
+            <select id="ai-provider">
+                <option value="gemini">Gemini</option>
+                <option value="lmstudio">Local LLM</option>
+            </select>
+        </div>
+
     </header>
 
 <main>
@@ -140,8 +148,9 @@
         <span id="diagnosis-status" class="status-badge status-neutral">AWAITING CASE</span>
     </div>
 
-    <p class="safety-note">This is an AI recommendation only. No network configuration is changed by NetSage.</p>
-    <dl class="diagnosis-grid">
+    <p id="provider-note" class="safety-note">
+        This is an AI recommendation only. No network configuration is changed by NetSage.
+    </p>
     
         <div class="diagnosis-item diagnosis-item-wide">
             <dt>Root cause</dt>

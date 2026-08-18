@@ -43,3 +43,14 @@ def test_route_check():
     findings = run_checks(data)
 
     assert "Route to network is missing" in findings
+
+def test_wrong_vlan_assignment():
+    data = {
+        "vlan": "10",
+        "existing_vlans": ["10", "20"],
+        "interface_vlan": "20"
+    }
+
+    findings = run_checks(data)
+
+    assert "Interface is assigned to the wrong VLAN" in findings

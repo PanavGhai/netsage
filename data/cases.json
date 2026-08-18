@@ -357,6 +357,9 @@
     "expected_fault": "DHCP relay is missing for the wireless client VLAN",
     "osi_layer": "Layer 3",
     "expected_next_command": "show running-config interface vlan 50",
-    "expected_fix": "Configure ip helper-address 192.168.10.10 on the VLAN 50 interface"
+    "expected_fix": "Configure ip helper-address 192.168.10.10 on the VLAN 50 interface",
+    "vlan": "10",
+    "existing_vlans": ["10", "20"],
+    "interface_vlan": "20"
   }
 ]
